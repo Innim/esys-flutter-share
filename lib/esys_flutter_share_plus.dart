@@ -38,12 +38,12 @@ class Share {
 
   /// Sends multiple files to other apps.
   static Future<void> files(
-      String title, Map<String, List<int>> files, String mimeType,
+      String title, Map<String, List<int>> files, List<String> mimeTypes,
       {String text = ''}) async {
     Map argsMap = <String, dynamic>{
       'title': '$title',
       'names': files.entries.toList().map((x) => x.key).toList(),
-      'mimeType': mimeType,
+      'mimeTypes': mimeTypes,
       'text': '$text'
     };
 

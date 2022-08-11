@@ -109,13 +109,11 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
 
         @SuppressWarnings("unchecked")
         ArrayList<String> names = (ArrayList<String>) argsMap.get("names");
-        String mimeType = (String) argsMap.get("mimeType");
+        ArrayList<String> mimeTypes = (ArrayList<String>) argsMap.get("mimeTypes");
         String text = (String) argsMap.get("text");
 
         Context activeContext = binding.getApplicationContext();
-
-        Intent shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
-        shareIntent.setType(mimeType);
+        Intent shareIntent = new Intent();
 
         ArrayList<Uri> contentUris = new ArrayList<>();
 
@@ -126,13 +124,21 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
             contentUris.add(contentUri);
         }
 
-        shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, contentUris);
-        // add optional text
+        if (contentUris.size() == 1) {
+            String mimeType = mimeTypes.get(0);
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.setType(mimeType);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, contentUris.get(0));
+        } else {
+            shareIntent.setAction(Intent.ACTION_SEND_MULTIPLE);
+            String test = reduceMimeTypes(mimeTypes);
+            shareIntent.setType(reduceMimeTypes(mimeTypes));
+            shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, contentUris);
+        }
+
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
-
+        
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
-
-        chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         List<ResolveInfo> resInfoList = activeContext.getPackageManager().queryIntentActivities(chooserIntent, PackageManager.MATCH_DEFAULT_ONLY);
 
@@ -142,6 +148,45 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
                 activeContext.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
         }
+        chooserIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         activeContext.startActivity(chooserIntent);
+    }
+
+    /**
+     * Reduces provided MIME types to a common one to provide [Intent] with a correct type
+     * to share multiple files
+     */
+    private String reduceMimeTypes(ArrayList<String> mimeTypes) {
+        String reducedMimeType = "*/*";
+        int size = mimeTypes.size();
+
+        if (size == 1) {
+            reducedMimeType = mimeTypes.get(0);
+        } else if (size > 1) {
+            String commonMimeType = mimeTypes.get(0);
+            for (int i = 1; i < size; ++i) {
+                if (!commonMimeType.equals(mimeTypes.get(i)) ) {
+                    if (getMimeTypeBase(commonMimeType) == getMimeTypeBase(mimeTypes.get(i))) {
+                        commonMimeType = getMimeTypeBase(mimeTypes.get(i)) + "/*";
+                    } else {
+                        commonMimeType = "*/*";
+                        break;
+                    }
+                }
+            }
+            reducedMimeType = commonMimeType;
+        }
+        return reducedMimeType;
+    }
+
+    /**
+     * Returns the first part of provided MIME type, which comes before '/' symbol
+     */
+    private String getMimeTypeBase(String mimeType) {
+        if (mimeType == null || !mimeType.contains("/")) {
+            return "*";
+        } else {
+            return mimeType.substring(0, mimeType.indexOf("/"));
+        }
     }
 }
