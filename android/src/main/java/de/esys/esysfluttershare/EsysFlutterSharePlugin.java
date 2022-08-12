@@ -123,17 +123,17 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
             Uri contentUri = FileProvider.getUriForFile(activeContext, fileProviderAuthority, file);
             contentUris.add(contentUri);
         }
-
-        String mimeType = reduceMimeTypes(mimeTypes);
+        
         if (contentUris.size() == 1) {
             shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.setType(mimeType);
             shareIntent.putExtra(Intent.EXTRA_STREAM, contentUris.get(0));
         } else {
             shareIntent.setAction(Intent.ACTION_SEND_MULTIPLE);
-            shareIntent.setType(mimeType);
             shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, contentUris);
         }
+
+        String mimeType = reduceMimeTypes(mimeTypes);
+        shareIntent.setType(mimeType);
 
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         
@@ -162,12 +162,13 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
         if (size == 1) {
             reducedMimeType = mimeTypes.get(0);
         } else if (size > 1) {
-            String commonMimeType = getMimeTypeBase(mimeTypes.get(0));
+            String commonMimeType = mimeTypes.get(0);
+            String commonMimeTypeBase = getMimeTypeBase(commonMimeType);
             for (int i = 1; i < size; ++i) {
-                String iterateType = getMimeTypeBase(mimeTypes.get(i));
-                if (!commonMimeType.equals(iterateType)) {
-                    if (commonMimeType == iterateType) {
-                        commonMimeType = iterateType + "/*";
+                String iterableTypeBase = getMimeTypeBase(mimeTypes.get(i));
+                if (!commonMimeType.equals(mimeTypes.get(i))) {
+                    if (commonMimeTypeBase == iterableTypeBase) {
+                        commonMimeType = iterableTypeBase + "/*";
                     } else {
                         commonMimeType = "*/*";
                         break;
