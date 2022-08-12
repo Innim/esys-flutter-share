@@ -124,15 +124,14 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
             contentUris.add(contentUri);
         }
 
+        String mimeType = reduceMimeTypes(mimeTypes);
         if (contentUris.size() == 1) {
-            String mimeType = mimeTypes.get(0);
             shareIntent.setAction(Intent.ACTION_SEND);
             shareIntent.setType(mimeType);
             shareIntent.putExtra(Intent.EXTRA_STREAM, contentUris.get(0));
         } else {
             shareIntent.setAction(Intent.ACTION_SEND_MULTIPLE);
-            String test = reduceMimeTypes(mimeTypes);
-            shareIntent.setType(reduceMimeTypes(mimeTypes));
+            shareIntent.setType(mimeType);
             shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, contentUris);
         }
 
@@ -163,11 +162,12 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
         if (size == 1) {
             reducedMimeType = mimeTypes.get(0);
         } else if (size > 1) {
-            String commonMimeType = mimeTypes.get(0);
+            String commonMimeType = getMimeTypeBase(mimeTypes.get(0));
             for (int i = 1; i < size; ++i) {
-                if (!commonMimeType.equals(mimeTypes.get(i)) ) {
-                    if (getMimeTypeBase(commonMimeType) == getMimeTypeBase(mimeTypes.get(i))) {
-                        commonMimeType = getMimeTypeBase(mimeTypes.get(i)) + "/*";
+                String iterateType = getMimeTypeBase(mimeTypes.get(i));
+                if (!commonMimeType.equals(iterateType)) {
+                    if (commonMimeType == iterateType) {
+                        commonMimeType = iterateType + "/*";
                     } else {
                         commonMimeType = "*/*";
                         break;
