@@ -165,8 +165,9 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
             String commonMimeType = mimeTypes.get(0);
             String commonMimeTypeBase = getMimeTypeBase(commonMimeType);
             for (int i = 1; i < size; ++i) {
-                String iterableTypeBase = getMimeTypeBase(mimeTypes.get(i));
-                if (!commonMimeType.equals(mimeTypes.get(i))) {
+                String iterabelType = mimeTypes.get(i);
+                if (!commonMimeType.equals(iterabelType)) {
+                    String iterableTypeBase = getMimeTypeBase(iterabelType);
                     if (commonMimeTypeBase == iterableTypeBase) {
                         commonMimeType = iterableTypeBase + "/*";
                     } else {
