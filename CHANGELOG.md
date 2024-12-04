@@ -1,3 +1,11 @@
+## 2.3.0
+
+* **Added** new methods `fileFromMemory()` and `filesFromMemory()` for sharing small files using byte arrays. These methods should be used cautiously and are **not recommended for large files** due to potential memory issues.
+* **Added** new methods `fileFromStorage()` and `filesFromStorage()` for sharing files using file paths. These methods are **recommended** for general use, especially with large files, to avoid memory-related errors.
+* **Deprecated** methods `file()` and `files()`. It is recommended to use `fileFromStorage()` and `filesFromStorage()` instead. For small files, `fileFromMemory()` and `filesFromMemory()` can be used, but they are not recommended for large files due to potential memory issues.
+* **Updated documentation** to clearly state the intended use cases for each method and to guide users toward the recommended approaches.
+* **Breaking change**: If you are using the deprecated methods `file()` and `files()`, please switch to the new methods to avoid possible memory issues.
+
 ## 2.2.0
 
 * Fix share file with text. When the text with one file was not shown.

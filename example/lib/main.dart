@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -75,7 +74,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _shareImage() async {
     try {
       final ByteData bytes = await rootBundle.load('assets/image1.png');
-      await Share.file(
+      await Share.fileFromMemory(
           'esys image', 'esys.png', bytes.buffer.asUint8List(), 'image/png',
           text: 'My optional text.');
     } catch (e) {
@@ -88,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final ByteData bytes1 = await rootBundle.load('assets/image1.png');
       final ByteData bytes2 = await rootBundle.load('assets/image2.png');
 
-      await Share.files(
+      await Share.filesFromMemory(
         'esys images',
         {
           'esys.png': bytes1.buffer.asUint8List(),
@@ -104,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _shareCSV() async {
     try {
       final ByteData bytes = await rootBundle.load('assets/addresses.csv');
-      await Share.file(
+      await Share.fileFromMemory(
           'addresses', 'addresses.csv', bytes.buffer.asUint8List(), 'text/csv');
     } catch (e) {
       print('error: $e');
@@ -117,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final ByteData bytes2 = await rootBundle.load('assets/image2.png');
       final ByteData bytes3 = await rootBundle.load('assets/addresses.csv');
 
-      await Share.files(
+      await Share.filesFromMemory(
           'esys images',
           {
             'esys.png': bytes1.buffer.asUint8List(),
@@ -137,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
           'https://shop.esys.eu/media/image/6f/8f/af/amlog_transport-berwachung.jpg'));
       var response = await request.close();
       Uint8List bytes = await consolidateHttpClientResponseBytes(response);
-      await Share.file('ESYS AMLOG', 'amlog.jpg', bytes, 'image/jpg');
+      await Share.fileFromMemory('ESYS AMLOG', 'amlog.jpg', bytes, 'image/jpg');
     } catch (e) {
       print('error: $e');
     }
@@ -146,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _shareSound() async {
     try {
       final ByteData bytes = await rootBundle.load('assets/cat.mp3');
-      await Share.file(
+      await Share.fileFromMemory(
           'Sound', 'cat.mp3', bytes.buffer.asUint8List(), 'audio/*');
     } catch (e) {
       print('error: $e');
