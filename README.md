@@ -44,21 +44,49 @@ Share text:
 Share.text('my text title', 'This is my text to share with other applications.', 'text/plain');
 ```
 
-Share file:
+Share File from Storage (Recommended):
+**Note:** This method is recommended for sharing files, especially large files, to avoid potential memory issues.
+
+```dart
+await EsysFlutterShare.fileFromStorage(
+  'Share File',
+  'example.pdf',
+  '/path/to/your/example.pdf',
+  'application/pdf',
+  text: 'Check out this file!',
+);
+```
+
+Share File from Memory (Use with Caution):
+**Warning:** Use this method only for small files. For large files, use fileFromStorage to avoid potential out-of-memory errors.
 
 ```dart
 final ByteData bytes = await rootBundle.load('assets/image1.png');
-await Share.file('esys image', 'esys.png', bytes.buffer.asUint8List(), 'image/png', text: 'My optional text.');
+await Share.fileFromMemory('esys image', 'esys.png', bytes.buffer.asUint8List(), 'image/png', text: 'My optional text.');
 ```
 
-Share files:
+Share Multiple Files from Storage (Recommended):
+
+```dart
+await EsysFlutterShare.filesFromStorage(
+  'Share Files',
+  {
+    'image1.png': '/path/to/your/image1.png',
+    'document.pdf': '/path/to/your/document.pdf',
+  },
+  {'image/png', 'application/pdf'},
+  text: 'Here are some files!',
+);
+```
+
+Share Multiple Files from Memory (Use with Caution):
 
 ```dart
 final ByteData bytes1 = await rootBundle.load('assets/image1.png');
 final ByteData bytes2 = await rootBundle.load('assets/image2.png');
 final ByteData bytes3 = await rootBundle.load('assets/addresses.csv');
 
-await Share.files(
+await Share.filesFromMemory(
     'esys images',
     {
         'esys.png': bytes1.buffer.asUint8List(),
@@ -75,7 +103,7 @@ Share file from url:
 var request = await HttpClient().getUrl(Uri.parse('https://shop.esys.eu/media/image/6f/8f/af/amlog_transport-berwachung.jpg'));
 var response = await request.close();
 Uint8List bytes = await consolidateHttpClientResponseBytes(response);
-await Share.file('ESYS AMLOG', 'amlog.jpg', bytes, 'image/jpg');
+await Share.fileFromMemory('ESYS AMLOG', 'amlog.jpg', bytes, 'image/jpg');
 ```
 
 Check out the example app in the Repository for further information.
