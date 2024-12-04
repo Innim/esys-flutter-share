@@ -78,6 +78,16 @@ class Share {
   ///
   /// **Warning:** Use this method only for small files. For large files, use [filesFromStorage]
   /// to avoid potential out of memory errors.
+  /// The optional `mimeTypes` parameter can be used to specify MIME types for
+  /// the provided files.
+  /// Android supports all natively available MIME types (wildcards like image/*
+  /// are also supported) and it's considered best practice to avoid mixing
+  /// unrelated file types (eg. image/jpg & application/pdf). If MIME types are
+  /// mixed the plugin attempts to find the lowest common denominator. Even
+  /// if MIME types are supplied the receiving app decides if those are used
+  /// or handled.
+  /// On iOS image/jpg, image/jpeg and image/png are handled as images, while
+  /// every other MIME type is considered a normal file.
   static Future<void> filesFromMemory(
     String title,
     Map<String, List<int>> files,
