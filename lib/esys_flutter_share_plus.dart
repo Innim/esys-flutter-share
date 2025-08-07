@@ -134,7 +134,9 @@ class Share {
 
     await sourceFile.copy(destFile.path);
 
-    _channel.invokeMethod('file', argsMap);
+    await _channel.invokeMethod('file', argsMap);
+
+    destFile.delete();
   }
 
   /// Sends multiple files to other apps using file paths.
@@ -164,13 +166,39 @@ class Share {
     };
 
     final tempDir = await getTemporaryDirectory();
-
+    final tempFilesList = <File>[];
     for (var entry in files.entries) {
       final sourceFile = File(entry.value);
       final destFile = await File('${tempDir.path}/${entry.key}').create();
+      tempFilesList.add(destFile);
       await sourceFile.copy(destFile.path);
     }
 
-    _channel.invokeMethod('files', argsMap);
+    await _channel.invokeMethod('files', argsMap);
+
+    for (final file in tempFilesList) {
+      file.delete();
+    }
+  }
+
+  /// Deletes all files with the specified extension from the temporary directory.
+  ///
+  /// These files may have been added when calling the methods [filesFromStorage]
+  /// and [fileFromStorage].
+  ///
+  /// By default, temporary files created for sharing are automatically deleted
+  /// when the sharing window is closed. However, if the user closes the app
+  /// before the sharing window is closed, or if the app crashes, these files
+  /// may remain in the temporary directory. It is recommended to periodically
+  /// call this method to ensure the temporary directory is cleaned up.
+  static Future<void> deleteTempShareFilesByExtension(String extension) async {
+    final tempDir = await getTemporaryDirectory();
+    final dir = Directory(tempDir.path);
+    final list = dir.listSync();
+    for (final file in list) {
+      if (file is File && file.path.endsWith(extension)) {
+        await file.delete();
+      }
+    }
   }
 }

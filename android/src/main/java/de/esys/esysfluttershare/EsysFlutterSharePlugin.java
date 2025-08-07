@@ -19,14 +19,22 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import android.app.Activity;
+import android.content.IntentSender;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
+import io.flutter.plugin.common.PluginRegistry;
 
 /** EsysfluttersharePlugin */
-public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler {
+public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
 
     private final String PROVIDER_AUTH_EXT = ".fileprovider.github.com/orgs/esysberlin/esys-flutter-share";
+    private static final int SHARE_REQUEST_CODE = 9023;
 
     private MethodChannel channel;
     private FlutterPluginBinding binding;
+    private Activity activity;
+    private Result pendingResult;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -38,13 +46,13 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         if (call.method.equals("text")) {
-            text(call.arguments);
+            text(call.arguments, result);
         }
         if (call.method.equals("file")) {
-            file(call.arguments);
+            file(call.arguments, result);
         }
         if (call.method.equals("files")) {
-            files(call.arguments);
+            files(call.arguments, result);
         }
     }
 
@@ -53,77 +61,104 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
         channel.setMethodCallHandler(null);
     }
 
-    private void text(Object arguments) {
+    @Override
+    public void onAttachedToActivity(ActivityPluginBinding binding) {
+        this.activity = binding.getActivity();
+        binding.addActivityResultListener(this);
+    }
+
+    @Override
+    public void onDetachedFromActivityForConfigChanges() {
+        this.activity = null;
+    }
+
+    @Override
+    public void onReattachedToActivityForConfigChanges(ActivityPluginBinding binding) {
+        this.activity = binding.getActivity();
+        binding.addActivityResultListener(this);
+    }
+
+    @Override
+    public void onDetachedFromActivity() {
+        this.activity = null;
+    }
+
+    @Override
+    public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SHARE_REQUEST_CODE && pendingResult != null) {
+            boolean success = (resultCode == Activity.RESULT_OK);
+            pendingResult.success(success);
+            pendingResult = null;
+            return true;
+        }
+        return false;
+    }
+
+    private void text(Object arguments, Result result) {
         @SuppressWarnings("unchecked")
         HashMap<String, String> argsMap = (HashMap<String, String>) arguments;
         String title = argsMap.get("title");
         String text = argsMap.get("text");
         String mimeType = argsMap.get("mimeType");
-
-        Context activeContext = binding.getApplicationContext();
-
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
-
         shareIntent.setType(mimeType);
         shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
-        chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         chooserIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        activeContext.startActivity(chooserIntent);
+        if (activity != null) {
+            pendingResult = result;
+            activity.startActivityForResult(chooserIntent, SHARE_REQUEST_CODE);
+        } else {
+            result.error("NO_ACTIVITY", "No foreground activity", null);
+        }
     }
 
-    private void file(Object arguments) {
+    private void file(Object arguments, Result result) {
         @SuppressWarnings("unchecked")
         HashMap<String, String> argsMap = (HashMap<String, String>) arguments;
         String title = argsMap.get("title");
         String name = argsMap.get("name");
         String mimeType = argsMap.get("mimeType");
         String text = argsMap.get("text");
-
         Context activeContext = binding.getApplicationContext();
-
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType(mimeType);
         File file = new File(activeContext.getCacheDir(), name);
         String fileProviderAuthority = activeContext.getPackageName() + PROVIDER_AUTH_EXT;
         Uri contentUri = FileProvider.getUriForFile(activeContext, fileProviderAuthority, file);
         shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-        // add optional text
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
-        chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
         List<ResolveInfo> resInfoList = activeContext.getPackageManager().queryIntentActivities(chooserIntent, PackageManager.MATCH_DEFAULT_ONLY);
-
         for (ResolveInfo resolveInfo : resInfoList) {
             String packageName = resolveInfo.activityInfo.packageName;
             activeContext.grantUriPermission(packageName, contentUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
         }
-        activeContext.startActivity(chooserIntent);
+        if (activity != null) {
+            pendingResult = result;
+            activity.startActivityForResult(chooserIntent, SHARE_REQUEST_CODE);
+        } else {
+            result.error("NO_ACTIVITY", "No foreground activity", null);
+        }
     }
 
-    private void files(Object arguments) {
+    private void files(Object arguments, Result result) {
         @SuppressWarnings("unchecked")
         HashMap<String, Object> argsMap = (HashMap<String, Object>) arguments;
         String title = (String) argsMap.get("title");
-
         @SuppressWarnings("unchecked")
         ArrayList<String> names = (ArrayList<String>) argsMap.get("names");
         ArrayList<String> mimeTypes = (ArrayList<String>) argsMap.get("mimeTypes");
         String text = (String) argsMap.get("text");
-
         Context activeContext = binding.getApplicationContext();
         Intent shareIntent = new Intent();
-
         ArrayList<Uri> contentUris = new ArrayList<>();
-
         for (String name : names) {
             File file = new File(activeContext.getCacheDir(), name);
             String fileProviderAuthority = activeContext.getPackageName() + PROVIDER_AUTH_EXT;
             Uri contentUri = FileProvider.getUriForFile(activeContext, fileProviderAuthority, file);
             contentUris.add(contentUri);
         }
-        
         if (contentUris.size() == 1) {
             shareIntent.setAction(Intent.ACTION_SEND);
             shareIntent.putExtra(Intent.EXTRA_STREAM, contentUris.get(0));
@@ -131,24 +166,23 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler 
             shareIntent.setAction(Intent.ACTION_SEND_MULTIPLE);
             shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, contentUris);
         }
-
         String mimeType = reduceMimeTypes(mimeTypes);
         shareIntent.setType(mimeType);
-
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
-        
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
-
         List<ResolveInfo> resInfoList = activeContext.getPackageManager().queryIntentActivities(chooserIntent, PackageManager.MATCH_DEFAULT_ONLY);
-
         for (ResolveInfo resolveInfo : resInfoList) {
             String packageName = resolveInfo.activityInfo.packageName;
             for(Uri uri: contentUris){
                 activeContext.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
         }
-        chooserIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        activeContext.startActivity(chooserIntent);
+        if (activity != null) {
+            pendingResult = result;
+            activity.startActivityForResult(chooserIntent, SHARE_REQUEST_CODE);
+        } else {
+            result.error("NO_ACTIVITY", "No foreground activity", null);
+        }
     }
 
     /**
