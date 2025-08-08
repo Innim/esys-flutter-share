@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -8,7 +9,7 @@ class Share {
   static const MethodChannel _channel = const MethodChannel(
       'channel:github.com/orgs/esysberlin/esys-flutter-share');
 
-  static const _tempShareDirectoryName = 'share_tmp';
+  static const _tempShareDirectoryName = 'org_innim_esys_flutter_share_tmp';
 
   static Future<void> Function()? _initialise;
 
@@ -78,6 +79,7 @@ class Share {
     String mimeType, {
     String text = '',
   }) async {
+    await init();
     Map<String, String> argsMap = {
       'title': title,
       'name': name,
@@ -112,6 +114,7 @@ class Share {
     Set<String> mimeTypes, {
     String text = '',
   }) async {
+    await init();
     Map<String, dynamic> argsMap = {
       'title': title,
       'names': files.keys.toList(),
@@ -139,6 +142,7 @@ class Share {
     String mimeType, {
     String text = '',
   }) async {
+    await init();
     Map<String, String> argsMap = {
       'title': title,
       'name': name,
@@ -148,7 +152,9 @@ class Share {
 
     final tempShareDir = await _getTempShareDirectory();
     final sourceFile = File(filePath);
-    final destFile = await File('${tempShareDir.path}/$name').create();
+    final destFile =
+        await File('${tempShareDir.path}/${_getRandomString()}/$name')
+            .create(recursive: true);
 
     await sourceFile.copy(destFile.path);
 
@@ -176,6 +182,7 @@ class Share {
     Set<String> mimeTypes, {
     String text = '',
   }) async {
+    await init();
     Map<String, dynamic> argsMap = {
       'title': title,
       'names': files.keys.toList(),
@@ -187,7 +194,9 @@ class Share {
     final tempFilesList = <File>[];
     for (var entry in files.entries) {
       final sourceFile = File(entry.value);
-      final destFile = await File('${tempShareDir.path}/${entry.key}').create();
+      final destFile =
+          await File('${tempShareDir.path}/${_getRandomString()}/${entry.key}')
+              .create(recursive: true);
       tempFilesList.add(destFile);
       await sourceFile.copy(destFile.path);
     }
@@ -206,20 +215,19 @@ class Share {
 
   static Future<Directory> _getTempShareDirectory() async {
     final tempDir = await getTemporaryDirectory();
-    final tempShareDir =
-        await Directory('${tempDir.path}/$_tempShareDirectoryName');
-    if (!(await tempShareDir.exists())) {
-      await tempShareDir.create();
-    }
+    final tempShareDir = Directory('${tempDir.path}/$_tempShareDirectoryName');
+    await tempShareDir.create();
+
     return tempShareDir;
+  }
+
+  static String _getRandomString() {
+    final random = Random();
+    return random.nextInt(100000).toString();
   }
 
   static Future<void> _clearTempShareDirectory() async {
     final tempShareDir = await _getTempShareDirectory();
-    final dir = Directory('${tempShareDir.path}/$_tempShareDirectoryName');
-
-    if (await dir.exists()) {
-      dir.delete();
-    }
+    tempShareDir.delete();
   }
 }
