@@ -23,14 +23,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    // Clean up temporary share files on app start.
-    // By default, these files are deleted when the share window is closed,
-    // but if the app was closed or crashed before that, some files may remain.
-    // It's recommended to periodically clean up temp files for common share extensions.
-    Share.deleteTempShareFilesByExtension('.png');
-    Share.deleteTempShareFilesByExtension('.jpg');
-    Share.deleteTempShareFilesByExtension('.csv');
-    Share.deleteTempShareFilesByExtension('.mp3');
+    // initialise the plugin before work with share.
+    Share.init();
   }
 
   @override

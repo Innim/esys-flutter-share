@@ -38,6 +38,13 @@ Import:
 import 'package:esys_flutter_share_plus/esys_flutter_share_plus.dart';
 ```
 
+Initialize the plugin (required):
+
+```dart
+// Call this method at app startup or before starting to work with sharing
+await Share.init();
+```
+
 Share text:
 
 ```dart

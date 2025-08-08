@@ -1,7 +1,7 @@
-## 2.3.1
+## 2.4.0
 
-* Added new method `deleteTempShareFilesByExtension` for removing temporary files created by
-  `filesFromStorage` and `fileFromStorage`.
+* **Added** new method `init()` for initializing the Share plugin and cleaning up temporary files.
+  This method should be called at app startup or before starting to work with sharing.
 * Implemented automatic deletion of temporary files created in `filesFromStorage` and
   `fileFromStorage` after sharing is completed (when the share window is closed).
 

@@ -8,6 +8,24 @@ class Share {
   static const MethodChannel _channel = const MethodChannel(
       'channel:github.com/orgs/esysberlin/esys-flutter-share');
 
+  static const _tempShareDirectoryName = 'share_tmp';
+
+  static Future<void> Function()? _initialise;
+
+  /// Initializes the Share plugin.
+  ///
+  /// This method should be called at app startup or before starting to work with sharing.
+  /// It performs cleanup of temporary files that may have been left from previous
+  /// sharing sessions, especially if the app was closed or crashed before the share
+  /// window was properly closed.
+  ///
+  /// It's recommended to call this method in your app's initialization code
+  /// (e.g., in main() or in the initState of your main widget) to ensure
+  /// a clean state before any sharing operations.
+  static Future<void> init() async {
+    await (_initialise ??= _init);
+  }
+
   /// Sends a text to other apps.
   static void text(String title, String text, String mimeType) {
     Map argsMap = <String, String>{
@@ -128,15 +146,15 @@ class Share {
       'text': text
     };
 
-    final tempDir = await getTemporaryDirectory();
+    final tempShareDir = await _getTempShareDirectory();
     final sourceFile = File(filePath);
-    final destFile = await File('${tempDir.path}/$name').create();
+    final destFile = await File('${tempShareDir.path}/$name').create();
 
     await sourceFile.copy(destFile.path);
 
-    await _channel.invokeMethod('file', argsMap);
-
-    destFile.delete();
+    _channel.invokeMethod('file', argsMap).then((_) {
+      destFile.delete();
+    });
   }
 
   /// Sends multiple files to other apps using file paths.
@@ -165,40 +183,38 @@ class Share {
       'text': text
     };
 
-    final tempDir = await getTemporaryDirectory();
+    final tempShareDir = await _getTempShareDirectory();
     final tempFilesList = <File>[];
     for (var entry in files.entries) {
       final sourceFile = File(entry.value);
-      final destFile = await File('${tempDir.path}/${entry.key}').create();
+      final destFile = await File('${tempShareDir.path}/${entry.key}').create();
       tempFilesList.add(destFile);
       await sourceFile.copy(destFile.path);
     }
 
-    await _channel.invokeMethod('files', argsMap);
-
-    for (final file in tempFilesList) {
-      file.delete();
-    }
+    _channel.invokeMethod('files', argsMap).then((_) {
+      for (final file in tempFilesList) {
+        file.delete();
+      }
+    });
+    ;
   }
 
-  /// Deletes all files with the specified extension from the temporary directory.
-  ///
-  /// These files may have been added when calling the methods [filesFromStorage]
-  /// and [fileFromStorage].
-  ///
-  /// By default, temporary files created for sharing are automatically deleted
-  /// when the sharing window is closed. However, if the user closes the app
-  /// before the sharing window is closed, or if the app crashes, these files
-  /// may remain in the temporary directory. It is recommended to periodically
-  /// call this method to ensure the temporary directory is cleaned up.
-  static Future<void> deleteTempShareFilesByExtension(String extension) async {
+  static Future<void> _init() async {
+    _clearTempShareDirectory();
+  }
+
+  static Future<Directory> _getTempShareDirectory() async {
     final tempDir = await getTemporaryDirectory();
-    final dir = Directory(tempDir.path);
-    final list = dir.listSync();
-    for (final file in list) {
-      if (file is File && file.path.endsWith(extension)) {
-        await file.delete();
-      }
+    return Directory('${tempDir.path}/$_tempShareDirectoryName');
+  }
+
+  static Future<void> _clearTempShareDirectory() async {
+    final tempShareDir = await _getTempShareDirectory();
+    final dir = Directory('${tempShareDir.path}/$_tempShareDirectoryName');
+
+    if (await dir.exists()) {
+      dir.delete();
     }
   }
 }
