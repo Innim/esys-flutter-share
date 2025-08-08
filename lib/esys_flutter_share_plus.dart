@@ -206,7 +206,12 @@ class Share {
 
   static Future<Directory> _getTempShareDirectory() async {
     final tempDir = await getTemporaryDirectory();
-    return Directory('${tempDir.path}/$_tempShareDirectoryName');
+    final tempShareDir =
+        await Directory('${tempDir.path}/$_tempShareDirectoryName');
+    if (!(await tempShareDir.exists())) {
+      await tempShareDir.create();
+    }
+    return tempShareDir;
   }
 
   static Future<void> _clearTempShareDirectory() async {
