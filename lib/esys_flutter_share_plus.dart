@@ -11,7 +11,7 @@ class Share {
 
   static const _tempShareDirectoryName = 'org_innim_esys_flutter_share_tmp';
 
-  static Future<void> Function()? _initialise;
+  static Future<void>? _initialise;
 
   /// Initializes the Share plugin.
   ///
@@ -24,7 +24,7 @@ class Share {
   /// (e.g., in main() or in the initState of your main widget) to ensure
   /// a clean state before any sharing operations.
   static Future<void> init() async {
-    await (_initialise ??= _init);
+    await (_initialise ??= _init());
   }
 
   /// Sends a text to other apps.
