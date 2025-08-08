@@ -1,11 +1,26 @@
+## 2.4.0
+
+* **Added** new method `init()` for initializing the Share plugin and cleaning up temporary files.
+  This method should be called at app startup or before starting to work with sharing.
+* Implemented automatic deletion of temporary files created in `filesFromStorage` and
+  `fileFromStorage` after sharing is completed (when the share window is closed).
+
 ## 2.3.0
 
-* **Added** new methods `fileFromMemory()` and `filesFromMemory()` for sharing small files using byte arrays. These methods should be used cautiously and are **not recommended for large files** due to potential memory issues.
-* **Added** new methods `fileFromStorage()` and `filesFromStorage()` for sharing files using file paths. These methods are **recommended** for general use, especially with large files, to avoid memory-related errors.
+* **Added** new methods `fileFromMemory()` and `filesFromMemory()` for sharing small files using
+  byte arrays. These methods should be used cautiously and are **not recommended for large files**
+  due to potential memory issues.
+* **Added** new methods `fileFromStorage()` and `filesFromStorage()` for sharing files using file
+  paths. These methods are **recommended** for general use, especially with large files, to avoid
+  memory-related errors.
 * **Added** explicit namespace declaration for compatibility with latest Android Gradle Plugin.
-* **Deprecated** methods `file()` and `files()`. It is recommended to use `fileFromStorage()` and `filesFromStorage()` instead. For small files, `fileFromMemory()` and `filesFromMemory()` can be used, but they are not recommended for large files due to potential memory issues.
-* **Updated documentation** to clearly state the intended use cases for each method and to guide users toward the recommended approaches.
-* **Breaking change**: If you are using the deprecated methods `file()` and `files()`, please switch to the new methods to avoid possible memory issues.
+* **Deprecated** methods `file()` and `files()`. It is recommended to use `fileFromStorage()` and
+  `filesFromStorage()` instead. For small files, `fileFromMemory()` and `filesFromMemory()` can be
+  used, but they are not recommended for large files due to potential memory issues.
+* **Updated documentation** to clearly state the intended use cases for each method and to guide
+  users toward the recommended approaches.
+* **Breaking change**: If you are using the deprecated methods `file()` and `files()`, please switch
+  to the new methods to avoid possible memory issues.
 
 ## 2.2.0
 
@@ -15,7 +30,8 @@
 
 ## 2.1.1
 
-* Fixed bug by granting permission. So now granting permission for the uri for each resolvable application.
+* Fixed bug by granting permission. So now granting permission for the uri for each resolvable
+  application.
 
 ## 2.1.0
 
@@ -51,7 +67,10 @@
 
 ## 0.0.9
 
-* Breaking change. Migrate from the deprecated original Android Support Library to AndroidX. This shouldn't result in any functional changes, but it requires   any Android apps using this plugin to [also migrate](https://developer.android.com/jetpack/androidx/migrate) if they're using the original support library.
+* Breaking change. Migrate from the deprecated original Android Support Library to AndroidX. This
+  shouldn't result in any functional changes, but it requires any Android apps using this plugin
+  to [also migrate](https://developer.android.com/jetpack/androidx/migrate) if they're using the
+  original support library.
 
 ## 0.0.8
 

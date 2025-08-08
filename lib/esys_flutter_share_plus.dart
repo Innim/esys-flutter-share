@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -7,6 +8,24 @@ import 'package:path_provider/path_provider.dart';
 class Share {
   static const MethodChannel _channel = const MethodChannel(
       'channel:github.com/orgs/esysberlin/esys-flutter-share');
+
+  static const _tempShareDirectoryName = 'org_innim_esys_flutter_share_tmp';
+
+  static Future<void>? _initialise;
+
+  /// Initializes the Share plugin.
+  ///
+  /// This method should be called at app startup or before starting to work with sharing.
+  /// It performs cleanup of temporary files that may have been left from previous
+  /// sharing sessions, especially if the app was closed or crashed before the share
+  /// window was properly closed.
+  ///
+  /// It's recommended to call this method in your app's initialization code
+  /// (e.g., in main() or in the initState of your main widget) to ensure
+  /// a clean state before any sharing operations.
+  static Future<void> init() async {
+    await (_initialise ??= _init());
+  }
 
   /// Sends a text to other apps.
   static void text(String title, String text, String mimeType) {
@@ -60,6 +79,7 @@ class Share {
     String mimeType, {
     String text = '',
   }) async {
+    await init();
     Map<String, String> argsMap = {
       'title': title,
       'name': name,
@@ -94,6 +114,7 @@ class Share {
     Set<String> mimeTypes, {
     String text = '',
   }) async {
+    await init();
     Map<String, dynamic> argsMap = {
       'title': title,
       'names': files.keys.toList(),
@@ -121,6 +142,7 @@ class Share {
     String mimeType, {
     String text = '',
   }) async {
+    await init();
     Map<String, String> argsMap = {
       'title': title,
       'name': name,
@@ -128,13 +150,15 @@ class Share {
       'text': text
     };
 
-    final tempDir = await getTemporaryDirectory();
+    final tempShareDir = await _getDirectoryForShareFile();
     final sourceFile = File(filePath);
-    final destFile = await File('${tempDir.path}/$name').create();
+    final destFile = await File('${tempShareDir.path}/$name').create();
 
     await sourceFile.copy(destFile.path);
 
-    _channel.invokeMethod('file', argsMap);
+    _channel.invokeMethod('file', argsMap).then((_) {
+      destFile.delete();
+    });
   }
 
   /// Sends multiple files to other apps using file paths.
@@ -156,6 +180,7 @@ class Share {
     Set<String> mimeTypes, {
     String text = '',
   }) async {
+    await init();
     Map<String, dynamic> argsMap = {
       'title': title,
       'names': files.keys.toList(),
@@ -163,14 +188,49 @@ class Share {
       'text': text
     };
 
-    final tempDir = await getTemporaryDirectory();
-
+    final tempShareDir = await _getDirectoryForShareFile();
+    final tempFilesList = <File>[];
     for (var entry in files.entries) {
       final sourceFile = File(entry.value);
-      final destFile = await File('${tempDir.path}/${entry.key}').create();
+      final destFile = await File('${tempShareDir.path}/${entry.key}').create();
+      tempFilesList.add(destFile);
       await sourceFile.copy(destFile.path);
     }
 
-    _channel.invokeMethod('files', argsMap);
+    _channel.invokeMethod('files', argsMap).then((_) {
+      for (final file in tempFilesList) {
+        file.delete();
+      }
+    });
+    ;
+  }
+
+  static Future<void> _init() async {
+    _clearTempShareDirectory();
+  }
+
+  static Future<Directory> _getDirectoryForShareFile() async {
+    final tempShareDir = await _getBaseTempShareDirectory();
+    final dirForFile = Directory('${tempShareDir.path}/${_getRandomString()}');
+    dirForFile.create(recursive: true);
+    return dirForFile;
+  }
+
+  static Future<Directory> _getBaseTempShareDirectory() async {
+    final tempDir = await getTemporaryDirectory();
+    final tempShareDir = Directory('${tempDir.path}/$_tempShareDirectoryName');
+    return tempShareDir;
+  }
+
+  static String _getRandomString() {
+    final random = Random();
+    return random.nextInt(100000).toString();
+  }
+
+  static Future<void> _clearTempShareDirectory() async {
+    final tempShareDir = await _getBaseTempShareDirectory();
+    if (await tempShareDir.exists()) {
+      tempShareDir.delete(recursive: true);
+    }
   }
 }
