@@ -150,11 +150,10 @@ class Share {
       'text': text
     };
 
-    final tempShareDir = await _getTempShareDirectory();
+    final tempShareDir = await _getDirectoryForShareFile();
     final sourceFile = File(filePath);
     final destFile =
-        await File('${tempShareDir.path}/${_getRandomString()}/$name')
-            .create(recursive: true);
+        await File('${tempShareDir.path}/$name').create(recursive: true);
 
     await sourceFile.copy(destFile.path);
 
@@ -190,13 +189,12 @@ class Share {
       'text': text
     };
 
-    final tempShareDir = await _getTempShareDirectory();
+    final tempShareDir = await _getDirectoryForShareFile();
     final tempFilesList = <File>[];
     for (var entry in files.entries) {
       final sourceFile = File(entry.value);
-      final destFile =
-          await File('${tempShareDir.path}/${_getRandomString()}/${entry.key}')
-              .create(recursive: true);
+      final destFile = await File('${tempShareDir.path}/${entry.key}')
+          .create(recursive: true);
       tempFilesList.add(destFile);
       await sourceFile.copy(destFile.path);
     }
@@ -213,11 +211,16 @@ class Share {
     _clearTempShareDirectory();
   }
 
-  static Future<Directory> _getTempShareDirectory() async {
+  static Future<Directory> _getDirectoryForShareFile() async {
+    final tempShareDir = await _getBaseTempShareDirectory();
+    final dirForFile = Directory('${tempShareDir.path}/${_getRandomString()}');
+    dirForFile.create(recursive: true);
+    return dirForFile;
+  }
+
+  static Future<Directory> _getBaseTempShareDirectory() async {
     final tempDir = await getTemporaryDirectory();
     final tempShareDir = Directory('${tempDir.path}/$_tempShareDirectoryName');
-    await tempShareDir.create();
-
     return tempShareDir;
   }
 
@@ -227,7 +230,9 @@ class Share {
   }
 
   static Future<void> _clearTempShareDirectory() async {
-    final tempShareDir = await _getTempShareDirectory();
-    tempShareDir.delete();
+    final tempShareDir = await _getBaseTempShareDirectory();
+    if (await tempShareDir.exists()) {
+      tempShareDir.delete(recursive: true);
+    }
   }
 }
