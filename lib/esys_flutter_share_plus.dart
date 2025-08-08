@@ -152,8 +152,7 @@ class Share {
 
     final tempShareDir = await _getDirectoryForShareFile();
     final sourceFile = File(filePath);
-    final destFile =
-        await File('${tempShareDir.path}/$name').create(recursive: true);
+    final destFile = await File('${tempShareDir.path}/$name').create();
 
     await sourceFile.copy(destFile.path);
 
@@ -193,8 +192,7 @@ class Share {
     final tempFilesList = <File>[];
     for (var entry in files.entries) {
       final sourceFile = File(entry.value);
-      final destFile = await File('${tempShareDir.path}/${entry.key}')
-          .create(recursive: true);
+      final destFile = await File('${tempShareDir.path}/${entry.key}').create();
       tempFilesList.add(destFile);
       await sourceFile.copy(destFile.path);
     }
