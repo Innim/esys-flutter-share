@@ -143,18 +143,19 @@ class Share {
     String text = '',
   }) async {
     await init();
-    Map<String, String> argsMap = {
-      'title': title,
-      'name': name,
-      'mimeType': mimeType,
-      'text': text
-    };
-
     final tempShareDir = await _getDirectoryForShareFile();
     final sourceFile = File(filePath);
     final destFile = await File('${tempShareDir.path}/$name').create();
 
     await sourceFile.copy(destFile.path);
+
+    Map<String, String> argsMap = {
+      'title': title,
+      'name': name,
+      'mimeType': mimeType,
+      'text': text,
+      'filePath': destFile.path
+    };
 
     _channel.invokeMethod('file', argsMap).then((_) {
       destFile.delete();
@@ -181,21 +182,25 @@ class Share {
     String text = '',
   }) async {
     await init();
-    Map<String, dynamic> argsMap = {
-      'title': title,
-      'names': files.keys.toList(),
-      'mimeTypes': mimeTypes.toList(),
-      'text': text
-    };
-
     final tempShareDir = await _getDirectoryForShareFile();
     final tempFilesList = <File>[];
+    final filePaths = <String>[];
+    
     for (var entry in files.entries) {
       final sourceFile = File(entry.value);
       final destFile = await File('${tempShareDir.path}/${entry.key}').create();
       tempFilesList.add(destFile);
+      filePaths.add(destFile.path);
       await sourceFile.copy(destFile.path);
     }
+
+    Map<String, dynamic> argsMap = {
+      'title': title,
+      'names': files.keys.toList(),
+      'mimeTypes': mimeTypes.toList(),
+      'text': text,
+      'filePaths': filePaths
+    };
 
     _channel.invokeMethod('files', argsMap).then((_) {
       for (final file in tempFilesList) {
@@ -212,7 +217,7 @@ class Share {
   static Future<Directory> _getDirectoryForShareFile() async {
     final tempShareDir = await _getBaseTempShareDirectory();
     final dirForFile = Directory('${tempShareDir.path}/${_getRandomString()}');
-    dirForFile.create(recursive: true);
+    await dirForFile.create(recursive: true);
     return dirForFile;
   }
 

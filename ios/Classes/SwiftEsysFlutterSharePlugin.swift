@@ -47,17 +47,15 @@ public class SwiftEsysFlutterSharePlugin: NSObject, FlutterPlugin {
     }
     
     func file(arguments:Any?, completion: @escaping (Bool) -> Void) {
-        // prepare method channel args
-        // no use in ios
-        //// let title:String = argsMap.value(forKey: "title") as! String
         let argsMap = arguments as! NSDictionary
         let name:String = argsMap.value(forKey: "name") as! String
         let text:String = argsMap.value(forKey: "text") as! String
-        // load the file
-        let docsPath:String = NSSearchPathForDirectoriesInDomains(.cachesDirectory,.userDomainMask , true).first!;
-        let contentUri = NSURL(fileURLWithPath: docsPath).appendingPathComponent(name)
-        // prepare sctivity items
-        var activityItems:[Any] = [contentUri!];
+        let filePath:String = argsMap.value(forKey: "filePath") as! String
+        
+        let fileURL = URL(fileURLWithPath: filePath)
+        
+        // prepare activity items
+        var activityItems:[Any] = [fileURL];
         if(!text.isEmpty){
             // add optional text
             activityItems.append(text);
@@ -74,21 +72,23 @@ public class SwiftEsysFlutterSharePlugin: NSObject, FlutterPlugin {
     }
     
     func files(arguments:Any?, completion: @escaping (Bool) -> Void) {
-        // prepare method channel args
-        // no use in ios
-        //// let title:String = argsMap.value(forKey: "title") as! String
         let argsMap = arguments as! NSDictionary
         let names:[String] = argsMap.value(forKey: "names") as! [String]
         let text:String = argsMap.value(forKey: "text") as! String
+        let filePaths:[String] = argsMap.value(forKey: "filePaths") as! [String]
 
-        // prepare sctivity items
-        var activityItems:[Any] = [];
-
-        // load the files
-        for name in names {
-            let docsPath:String = NSSearchPathForDirectoriesInDomains(.cachesDirectory,.userDomainMask , true).first!;
-            activityItems.append(NSURL(fileURLWithPath: docsPath).appendingPathComponent(name)!);
+        // prepare file URLs
+        var fileURLs: [URL] = []
+        for filePath in filePaths {
+            fileURLs.append(URL(fileURLWithPath: filePath))
         }
+
+        // prepare activity items
+        var activityItems:[Any] = []
+        for fileURL in fileURLs {
+            activityItems.append(fileURL);
+        }
+        
         if(!text.isEmpty){
             // add optional text
             activityItems.append(text);
@@ -105,4 +105,5 @@ public class SwiftEsysFlutterSharePlugin: NSObject, FlutterPlugin {
         }
         controller.show(activityViewController, sender: self)
     }
+
 }
