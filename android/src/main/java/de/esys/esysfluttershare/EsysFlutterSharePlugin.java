@@ -117,13 +117,13 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
         @SuppressWarnings("unchecked")
         HashMap<String, String> argsMap = (HashMap<String, String>) arguments;
         String title = argsMap.get("title");
-        String name = argsMap.get("name");
         String mimeType = argsMap.get("mimeType");
         String text = argsMap.get("text");
+        String filePath = argsMap.get("filePath");
         Context activeContext = binding.getApplicationContext();
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType(mimeType);
-        File file = new File(activeContext.getCacheDir(), name);
+        File file = new File(filePath);
         String fileProviderAuthority = activeContext.getPackageName() + PROVIDER_AUTH_EXT;
         Uri contentUri = FileProvider.getUriForFile(activeContext, fileProviderAuthority, file);
         shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
@@ -147,14 +147,14 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
         HashMap<String, Object> argsMap = (HashMap<String, Object>) arguments;
         String title = (String) argsMap.get("title");
         @SuppressWarnings("unchecked")
-        ArrayList<String> names = (ArrayList<String>) argsMap.get("names");
+        ArrayList<String> filePaths = (ArrayList<String>) argsMap.get("filePaths");
         ArrayList<String> mimeTypes = (ArrayList<String>) argsMap.get("mimeTypes");
         String text = (String) argsMap.get("text");
         Context activeContext = binding.getApplicationContext();
         Intent shareIntent = new Intent();
         ArrayList<Uri> contentUris = new ArrayList<>();
-        for (String name : names) {
-            File file = new File(activeContext.getCacheDir(), name);
+        for (String filePath : filePaths) {
+            File file = new File(filePath);
             String fileProviderAuthority = activeContext.getPackageName() + PROVIDER_AUTH_EXT;
             Uri contentUri = FileProvider.getUriForFile(activeContext, fileProviderAuthority, file);
             contentUris.add(contentUri);

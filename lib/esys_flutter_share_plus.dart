@@ -82,7 +82,6 @@ class Share {
     await init();
     Map<String, String> argsMap = {
       'title': title,
-      'name': name,
       'mimeType': mimeType,
       'text': text
     };
@@ -117,7 +116,6 @@ class Share {
     await init();
     Map<String, dynamic> argsMap = {
       'title': title,
-      'names': files.keys.toList(),
       'mimeTypes': mimeTypes.toList(),
       'text': text
     };
@@ -151,7 +149,6 @@ class Share {
 
     Map<String, String> argsMap = {
       'title': title,
-      'name': name,
       'mimeType': mimeType,
       'text': text,
       'filePath': destFile.path
@@ -185,7 +182,7 @@ class Share {
     final tempShareDir = await _getDirectoryForShareFile();
     final tempFilesList = <File>[];
     final filePaths = <String>[];
-    
+
     for (var entry in files.entries) {
       final sourceFile = File(entry.value);
       final destFile = await File('${tempShareDir.path}/${entry.key}').create();

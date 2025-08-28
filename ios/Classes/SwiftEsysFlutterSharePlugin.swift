@@ -48,7 +48,6 @@ public class SwiftEsysFlutterSharePlugin: NSObject, FlutterPlugin {
     
     func file(arguments:Any?, completion: @escaping (Bool) -> Void) {
         let argsMap = arguments as! NSDictionary
-        let name:String = argsMap.value(forKey: "name") as! String
         let text:String = argsMap.value(forKey: "text") as! String
         let filePath:String = argsMap.value(forKey: "filePath") as! String
         
@@ -73,20 +72,16 @@ public class SwiftEsysFlutterSharePlugin: NSObject, FlutterPlugin {
     
     func files(arguments:Any?, completion: @escaping (Bool) -> Void) {
         let argsMap = arguments as! NSDictionary
-        let names:[String] = argsMap.value(forKey: "names") as! [String]
         let text:String = argsMap.value(forKey: "text") as! String
         let filePaths:[String] = argsMap.value(forKey: "filePaths") as! [String]
 
-        // prepare file URLs
+        // prepare file URLs and activity items
         var fileURLs: [URL] = []
-        for filePath in filePaths {
-            fileURLs.append(URL(fileURLWithPath: filePath))
-        }
-
-        // prepare activity items
         var activityItems:[Any] = []
-        for fileURL in fileURLs {
-            activityItems.append(fileURL);
+        for filePath in filePaths {
+        let url = URL(fileURLWithPath: filePath)
+            fileURLs.append(url)
+            activityItems.append(url);
         }
         
         if(!text.isEmpty){
