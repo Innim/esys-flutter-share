@@ -1,3 +1,7 @@
+## 2.4.0+1
+
+* **Fixed** Fix share file error on ios.
+
 ## 2.4.0
 
 * **Added** new method `init()` for initializing the Share plugin and cleaning up temporary files.
