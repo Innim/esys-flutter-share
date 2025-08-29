@@ -76,11 +76,9 @@ public class SwiftEsysFlutterSharePlugin: NSObject, FlutterPlugin {
         let filePaths:[String] = argsMap.value(forKey: "filePaths") as! [String]
 
         // prepare file URLs and activity items
-        var fileURLs: [URL] = []
         var activityItems:[Any] = []
         for filePath in filePaths {
         let url = URL(fileURLWithPath: filePath)
-            fileURLs.append(url)
             activityItems.append(url);
         }
         
