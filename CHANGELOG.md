@@ -1,3 +1,11 @@
+## 2.5.0
+
+* Update Android `compileSdkVersion` to 35
+* Update Android `minSdkVersion` to 21
+* Update Android `gradle` version to 8.10
+* Update Android example app.
+* On Android sharing now launches in a separate Activity by default. To keep it in the current Activity, set `useSeparateActivity: false` in the `init` method. 
+
 ## 2.4.0+1
 
 * **Fixed** Fix share file error on ios.
