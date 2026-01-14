@@ -2,16 +2,13 @@ package de.esys.esysfluttershare;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
@@ -44,7 +41,6 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
     private Activity activity;
     private Result pendingResult;
     private Boolean useSeparateActivity;
-    private BroadcastReceiver shareResultReceiver;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -105,25 +101,9 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
             return true;
         }
 
-        appToForeground();
-
         return false;
     }
-
-    private void appToForeground() {
-        if (activity != null) {
-            Intent intent = new Intent(activity, activity.getClass());
-            intent.addFlags(
-                    FLAG_ACTIVITY_NEW_TASK |
-                            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
-                            Intent.FLAG_ACTIVITY_SINGLE_TOP
-            );
-            intent.putExtra("_return_timestamp_", System.currentTimeMillis());
-            activity.startActivity(intent);
-            activity.finish();
-        }
-    }
-
+    
     private void initPlugin(Object arguments, Result result) {
         useSeparateActivity = (Boolean) arguments;
     }
@@ -139,9 +119,10 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
         shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
         chooserIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        if (useSeparateActivity) chooserIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         if (activity != null) {
             pendingResult = result;
-            startSharing(chooserIntent);
+            activity.startActivityForResult(chooserIntent, SHARE_REQUEST_CODE);
         } else {
             result.error("NO_ACTIVITY", "No foreground activity", null);
         }
@@ -163,6 +144,7 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
         shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
+        if (useSeparateActivity) chooserIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         List<ResolveInfo> resInfoList = activeContext.getPackageManager().queryIntentActivities(chooserIntent, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo : resInfoList) {
             String packageName = resolveInfo.activityInfo.packageName;
@@ -170,7 +152,7 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
         }
         if (activity != null) {
             pendingResult = result;
-            startSharing(chooserIntent);
+            activity.startActivityForResult(chooserIntent, SHARE_REQUEST_CODE);
         } else {
             result.error("NO_ACTIVITY", "No foreground activity", null);
         }
@@ -204,59 +186,19 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
         shareIntent.setType(mimeType);
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
+        if (useSeparateActivity) chooserIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         List<ResolveInfo> resInfoList = activeContext.getPackageManager().queryIntentActivities(chooserIntent, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo : resInfoList) {
             String packageName = resolveInfo.activityInfo.packageName;
-            for (Uri uri : contentUris) {
+            for(Uri uri: contentUris){
                 activeContext.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
         }
         if (activity != null) {
             pendingResult = result;
-            startSharing(chooserIntent);
+            activity.startActivityForResult(chooserIntent, SHARE_REQUEST_CODE);
         } else {
             result.error("NO_ACTIVITY", "No foreground activity", null);
-        }
-    }
-
-    private void startSharing(Intent chooserIntent) {
-        if (Boolean.TRUE.equals(useSeparateActivity)) {
-            Intent shareActivityIntent = new Intent(activity, ShareSeparateActivity.class);
-            shareActivityIntent.putExtra("chooser_intent", chooserIntent);
-            registerShareResultReceiver();
-            activity.startActivity(shareActivityIntent);
-        } else {
-            activity.startActivityForResult(chooserIntent, SHARE_REQUEST_CODE);
-        }
-    }
-
-    private void registerShareResultReceiver() {
-        if (shareResultReceiver == null) {
-            shareResultReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    if (intent != null && intent.hasExtra("share_result")) {
-                        boolean success = intent.getBooleanExtra("share_result", false);
-                        if (pendingResult != null) {
-                            pendingResult.success(success);
-                            pendingResult = null;
-                        }
-                        unregisterShareResultReceiver();
-                    }
-                }
-            };
-
-            IntentFilter filter = new IntentFilter();
-            filter.addAction("de.esys.esysfluttershare.ACTION_SHARE_RESULT");
-            ContextCompat.registerReceiver(activity, shareResultReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
-        }
-
-    }
-
-    private void unregisterShareResultReceiver() {
-        if (shareResultReceiver != null && activity != null) {
-            activity.unregisterReceiver(shareResultReceiver);
-            shareResultReceiver = null;
         }
     }
 

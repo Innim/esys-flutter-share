@@ -2,16 +2,6 @@
   package="de.esys.esysfluttershare">
 
     <application>
-        <activity
-            android:name=".ShareSeparateActivity"
-            android:theme="@style/ShareTheme"
-            android:excludeFromRecents="true"
-            android:taskAffinity=""
-            android:launchMode="singleTask"
-            android:exported="false"
-            android:allowTaskReparenting="false"
-            android:noHistory="true" />
-
         <provider
             android:name="de.esys.esysfluttershare.EsysFlutterShareFileProvider"
             android:authorities="${applicationId}.fileprovider.github.com/orgs/esysberlin/esys-flutter-share"
