@@ -1,5 +1,7 @@
 package de.esys.esysfluttershare;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,13 +21,16 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+
 import android.app.Activity;
-import android.content.IntentSender;
+
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.PluginRegistry;
 
-/** EsysfluttersharePlugin */
+/**
+ * EsysfluttersharePlugin
+ */
 public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
 
     private final String PROVIDER_AUTH_EXT = ".fileprovider.github.com/orgs/esysberlin/esys-flutter-share";
@@ -35,6 +40,7 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
     private FlutterPluginBinding binding;
     private Activity activity;
     private Result pendingResult;
+    private Boolean useSeparateActivity;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -45,6 +51,9 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
+        if (call.method.equals("init")) {
+            initPlugin(call.arguments, result);
+        }
         if (call.method.equals("text")) {
             text(call.arguments, result);
         }
@@ -91,7 +100,12 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
             pendingResult = null;
             return true;
         }
+
         return false;
+    }
+    
+    private void initPlugin(Object arguments, Result result) {
+        useSeparateActivity = (Boolean) arguments;
     }
 
     private void text(Object arguments, Result result) {
@@ -105,6 +119,7 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
         shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
         chooserIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        if (useSeparateActivity) chooserIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         if (activity != null) {
             pendingResult = result;
             activity.startActivityForResult(chooserIntent, SHARE_REQUEST_CODE);
@@ -129,6 +144,7 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
         shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
+        if (useSeparateActivity) chooserIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         List<ResolveInfo> resInfoList = activeContext.getPackageManager().queryIntentActivities(chooserIntent, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo : resInfoList) {
             String packageName = resolveInfo.activityInfo.packageName;
@@ -170,6 +186,7 @@ public class EsysFlutterSharePlugin implements FlutterPlugin, MethodCallHandler,
         shareIntent.setType(mimeType);
         if (!text.isEmpty()) shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         Intent chooserIntent = Intent.createChooser(shareIntent, title);
+        if (useSeparateActivity) chooserIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         List<ResolveInfo> resInfoList = activeContext.getPackageManager().queryIntentActivities(chooserIntent, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo : resInfoList) {
             String packageName = resolveInfo.activityInfo.packageName;

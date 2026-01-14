@@ -23,8 +23,8 @@ class Share {
   /// It's recommended to call this method in your app's initialization code
   /// (e.g., in main() or in the initState of your main widget) to ensure
   /// a clean state before any sharing operations.
-  static Future<void> init() async {
-    await (_initialise ??= _init());
+  static Future<void> init({bool useSeparateActivity = true}) async {
+    await (_initialise ??= _init(useSeparateActivity));
   }
 
   /// Sends a text to other apps.
@@ -219,8 +219,15 @@ class Share {
     ;
   }
 
-  static Future<void> _init() async {
+  static Future<void> _init(bool useSeparateActivity) async {
+    if (Platform.isAndroid) {
+      await _initNativeAndroid(useSeparateActivity);
+    }
     _clearTempShareDirectory();
+  }
+
+  static Future<void> _initNativeAndroid(bool useSeparateActivity) async {
+    _channel.invokeMethod('init', useSeparateActivity);
   }
 
   static Future<Directory> _getDirectoryForShareFile() async {
