@@ -26,8 +26,7 @@ class Share {
   /// (e.g., in main() or in the initState of your main widget) to ensure
   /// a clean state before any sharing operations.
   static Future<void> init({bool useSeparateActivity = true}) async {
-    _useSeparateActivity = useSeparateActivity;
-    await (_initialise ??= _init());
+    await (_initialise ??= _init(useSeparateActivity));
     await _clearTempShareDirectory();
   }
 
@@ -230,7 +229,8 @@ class Share {
     ;
   }
 
-  static Future<void> _init() async {
+  static Future<void> _init(bool useSeparateActivity) async {
+    _useSeparateActivity = useSeparateActivity;
     if (Platform.isAndroid) {
       await _initNativeAndroid();
     }
