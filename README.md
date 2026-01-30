@@ -30,6 +30,15 @@ end
 
 Instead, if you have already a non-swift project, you can check this issue to solve the problem: [Friction adding swift plugin to objective-c project](https://github.com/flutter/flutter/issues/16049).
 
+## IMPORTANT Note for Android
+On Android, the Share function launches by default in a separate system task and activity. This maintains the cleanliness of your application's navigation stack. However, in this mode, the application cannot wait for the process to complete or reliably receive its result.
+
+Therefore, we cannot determine precisely whether the user has finished sharing the file to safely delete the temporary files. As a result, the temporary file directory is cleared each time a new sharing operation is initiated.
+
+You can also force a cleanup when you are certain the user has finished with the Share function (for example, when leaving the screen of your app from which sharing was launched). To do this, use the `clean()` method.
+
+Alternative option: You can disable launching in a separate system activity by setting the parameter `useSeparateActivity: false` in the `init()` method. In this case, the result of the Share operation will be returned to your application, and the cleanup of temporary files will happen automatically.
+
 ## Usage
 
 Import:
