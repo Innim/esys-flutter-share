@@ -1,3 +1,8 @@
+# 2.5.1
+
+* **Fixed** Android: an issue where files were deleted before being shared to another activity.
+* **Added** public method `clean()` to trigger the cleanup of the temporary files directory.
+
 ## 2.5.0
 
 * Update Android `compileSdkVersion` to 35

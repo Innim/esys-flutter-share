@@ -13,6 +13,8 @@ class Share {
 
   static Future<void>? _initialise;
 
+  static bool _useSeparateActivity = true;
+
   /// Initializes the Share plugin.
   ///
   /// This method should be called at app startup or before starting to work with sharing.
@@ -25,7 +27,11 @@ class Share {
   /// a clean state before any sharing operations.
   static Future<void> init({bool useSeparateActivity = true}) async {
     await (_initialise ??= _init(useSeparateActivity));
+    await _clearTempShareDirectory();
   }
+
+  /// Clearing the directory with temporary files.
+  static Future<void> clear() => _clearTempShareDirectory();
 
   /// Sends a text to other apps.
   static void text(String title, String text, String mimeType) {
@@ -93,7 +99,7 @@ class Share {
     };
 
     _channel.invokeMethod('file', argsMap).whenComplete(() {
-      file.delete();
+      if (!_useSeparateActivity || Platform.isIOS) file.delete();
     });
   }
 
@@ -137,8 +143,10 @@ class Share {
       'filePaths': filePaths,
     };
     _channel.invokeMethod('files', argsMap).whenComplete(() {
-      for (final file in tempFilesList) {
-        file.delete();
+      if (!_useSeparateActivity || Platform.isIOS) {
+        for (final file in tempFilesList) {
+          file.delete();
+        }
       }
     });
   }
@@ -168,7 +176,7 @@ class Share {
     };
 
     _channel.invokeMethod('file', argsMap).whenComplete(() {
-      destFile.delete();
+      if (!_useSeparateActivity || Platform.isIOS) destFile.delete();
     });
   }
 
@@ -212,22 +220,24 @@ class Share {
     };
 
     _channel.invokeMethod('files', argsMap).whenComplete(() {
-      for (final file in tempFilesList) {
-        file.delete();
+      if (!_useSeparateActivity || Platform.isIOS) {
+        for (final file in tempFilesList) {
+          file.delete();
+        }
       }
     });
     ;
   }
 
   static Future<void> _init(bool useSeparateActivity) async {
+    _useSeparateActivity = useSeparateActivity;
     if (Platform.isAndroid) {
-      await _initNativeAndroid(useSeparateActivity);
+      await _initNativeAndroid();
     }
-    _clearTempShareDirectory();
   }
 
-  static Future<void> _initNativeAndroid(bool useSeparateActivity) async {
-    _channel.invokeMethod('init', useSeparateActivity);
+  static Future<void> _initNativeAndroid() async {
+    _channel.invokeMethod('init', _useSeparateActivity);
   }
 
   static Future<Directory> _getDirectoryForShareFile() async {
